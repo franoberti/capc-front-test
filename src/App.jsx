@@ -37,7 +37,7 @@ function App() {
     setLoading(true);
     try {
       const response = await fetch(
-        `https://cadi.colegio-arquitectos.com.ar/api/obtenerUsuario?cidi=${cidi}`,
+        `http://localhost:3000/api/obtenerUsuario?cidi=${cidi}`,
         {
           method: "GET",
           headers: {
@@ -59,9 +59,72 @@ function App() {
     setLoading(false);
   };
 
+  const enviarNotificacion = async (cidi) => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `http://localhost:3000/api/enviarNotificacion`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            Cuil: "20411152260",
+            HashCookie: cidi,
+            Asunto: "Mensaje de prueba",
+            Subtitulo: "Turno programado",
+            Mensaje: "Este es un mensaje de prueba",
+            InfoDesc: "Prueba de notificación",
+            InfoDato: "12345678",
+            InfoLink: "https://ypsilon.ar",
+            Firma: "Francisco Oberti",
+            Ente: "Ypsilon",
+            DireccionEmail: "usuario@ejemplo.com",
+            SesionHash: cidi,
+          }),
+        }
+      );
+      setLoading(false);
+      const data = await response.json();
+      console.log(data);
+      if (data.status === 200) {
+        alert("Notificación enviada correctamente");
+      } else {
+        alert("Error al enviar la notificación");
+      }
+    } catch (error) {
+      console.error("Error al enviar la notificación:", error);
+      setLoading(false);
+      alert("Error al enviar la notificación");
+    }
+  };
+
+  const cerrarSesion = () => {
+    // 1. Borrar cookie
+    document.cookie = "cidi=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
+    // 2. Remover el query string 'cidi' de la URL
+    const url = new URL(window.location.href);
+    url.searchParams.delete("cidi");
+
+    // 3. Redirigir a la nueva URL sin el parámetro
+    window.location.href = url.toString();
+  };
+
   return (
     <div>
       <h1>Capc Front Test</h1>
+
+      {cidi && (
+        <button
+          onClick={cerrarSesion}
+          style={{ padding: "6px 12px", cursor: "pointer" }}
+        >
+          Cerrar sesión
+        </button>
+      )}
 
       {cidi ? (
         <div>
@@ -86,14 +149,19 @@ function App() {
                 <strong>DNI: </strong>
                 {dni}
               </span>
+              <div style={{ marginTop: "20px" }}>
+                <button onClick={() => enviarNotificacion(cidi)}>
+                  Enviar Notificacion de Prueba
+                </button>
+              </div>
             </div>
           ) : (
             <div
               id="btnValidar"
               data-url="{{urlAppOrigen}}"
-              class="loader-container"
+              className="loader-container"
             >
-              <div class="spinner"></div>
+              <div className="spinner"></div>
             </div>
           )}
           {/* <button  disabled={loading} onClick={() => obtenerDatosUsuario(cidi)}>
@@ -114,9 +182,7 @@ function App() {
           </div>
         </div>
       )}
-      
     </div>
-    
   );
 }
 
